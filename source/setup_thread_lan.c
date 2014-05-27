@@ -3,7 +3,7 @@
 
 void *create_lan(void *parametri){
 	
-	char					tipo='B';
+	char					tipo='L';
 	int 					br_id;
 	struct sockaddr_in		From;
 	char					string_remote_ip_address[100];
@@ -34,7 +34,6 @@ void *create_lan(void *parametri){
 
 		for (x=0; x<(param->n_port); x++){
 			/*acquisisco la porta in input che deve usare la lan */
-
 			
 			local_port_number = param->l_port_in[x];
 			/* creo il socket */
@@ -54,7 +53,7 @@ void *create_lan(void *parametri){
 			msg=msg_setup_link(p);
 			
 			/*  e poi spedendo il messaggio */
-			invia_msg(socketfd, port_br[param->br_id[x+1]], msg);
+			invia_msg(socketfd, port_br[param->br_id[x+1]], msg, param->id, tipo);
 			
 			
 			/* aggiungo il socket default nel "set di ascolto" / "insieme di fd di ascolto" della select */
@@ -107,9 +106,9 @@ void *create_lan(void *parametri){
 							}else{
 								sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 								remote_port_number = ntohs(From.sin_port);
-								
-								printf(_KBLU "ricevuto da socketfd %d , nel thread/LAN: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
-										(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);
+								stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+								/*printf(_KBLU "ricevuto da socketfd %d , nel thread/LAN: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
+										(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);*/
 							}
 						}
 					}

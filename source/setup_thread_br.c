@@ -31,7 +31,7 @@ void *create_br(void *parametri){
 	msg=malloc(sizeof(char)*(SIZEBUF-1));
 	
 	BRIDGE *param = (BRIDGE *)parametri;
-	printf("sono il thread/bridge: %d \n", (param->id));
+	printf("sono il thread/bridge: %d ", (param->id));
 	
 	FD_ZERO(&write_fd_set);
 	FD_ZERO(&read_fd_set);
@@ -41,15 +41,16 @@ void *create_br(void *parametri){
 	
 	socketfd=crea_socket(local_port_number);
 	
-	/* salvo il socket di default // sulla porta di default */
+	/* mi salvo il socket di default sulla porta di default */
 	param->sock_fd=socketfd;
-	printf(" il socket default di ascolto è: %d\n", param->sock_fd);
+	printf("il socket default di ascolto è: %d\n", param->sock_fd);
 	/* aggiungo il socket default nel "set di ascolto" / "insieme di fd di ascolto" della select */
 	FD_SET(socketfd,&read_fd_set);
 	/* FD_SET(socketfd,&write_fd_set); */ /* pensavo di scrivere subito i messaggi */
 	FD_SET(socketfd,&service_fd_set);
 	fdmax=socketfd+1;
 	pthread_mutex_unlock (&mutex);
+	
 	for(;;){
 		/* resto in ascolto sulla porta port_br[(param->id)] di default per ogni bridge, all'inizio */
 		read_fd_set=service_fd_set;
@@ -72,7 +73,6 @@ void *create_br(void *parametri){
 				memset(&From, 0, sizeof(From));
 				Fromlen=sizeof(struct sockaddr_in);
 				
-				printf(" il socket default BR che ha ricevuto  è: %d / del BR: %d \n", param->sock_fd, param->id);
 				
 				/* RECVFROM */
 				msglen = recvfrom (param->sock_fd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
@@ -85,17 +85,18 @@ void *create_br(void *parametri){
 				}else{
 					sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 					remote_port_number = ntohs(From.sin_port);
-					//stampa_pacchetto_ricevuto(&msg, param->id, remote_port_number, tipo);
-					printf(_KBLU "ricevuto da socketfd %d , nel thread/BRIDGE: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
-								(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);
+					stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd);
+					/*printf(_KBLU "ricevuto da socketfd %d , nel thread/BRIDGE: %d , msg: \"%s\" len %d, from host %s, port %d\n", param->sock_fd,
+								(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);*/
 			/* ------------------------------------------------------------------------------------------------------*/
 					
 					/* analizzo il messaggio ricevuto per capire che lan e' */
 					lan=quale_lan(msg);
+					printf("id del bridge: %d\n", param->id);
 					local_port_number = port_br[param->id] + lan;
 					
 					if (param->port_lan[lan] != remote_port_number){
-						printf(_KRED "Errore inizializ rete: (porta lan::Num lan) non coincide \n");
+						printf(_KRED "Errore setup link: (porta lan %d::Num lan %d) non coincide \n" _KNRM,param->port_lan[lan], lan );
 					}else {
 						
 						/* creo un nuovo socket per comunicare con la nuova lan */
@@ -109,14 +110,14 @@ void *create_br(void *parametri){
 						if (sock_fd_tmp > (fdmax-1)){
 							fdmax=sock_fd_tmp + 1;
 						}
-			/* -------------------------------------------------------------------------------------------------------*/
+					/* -----------------------------------------------------------------------------------*/
 						/* comunico alla lan in quale porta mi deve trasmettere i successivi messaggi,
 						la lan dovra' cambiare porta per comunicare attraverso il bridge */
-			/* -------------------------------------------------------------------------------------------------------*/
+					/* -----------------------------------------------------------------------------------*/
 						/* creo il messaggio da spedire*/
 						msg=risp_msg_port(local_port_number);
 						
-						invia_msg(sock_fd_tmp, remote_port_number, msg);
+						invia_msg(sock_fd_tmp, remote_port_number, msg, param->id, tipo);
 						
 					}
 				}
@@ -128,7 +129,7 @@ void *create_br(void *parametri){
 			for(p=0; p<fdmax; p++){
 				
 				if((p!=socketfd) && ((FD_ISSET(p,&read_fd_set))!=0)){
-					/* il socket_fd p � gi� stato creato */
+					/* il socket_fd p e' gia' stato creato */
 					for( x=0; x<12; x++){
 						if( p == param->sock_fd_local[x]){
 						
