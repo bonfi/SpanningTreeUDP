@@ -122,6 +122,7 @@ void invia_msg(short int socket_fd,unsigned short int porta, char *msg){
 	To.sin_addr.s_addr	=	inet_addr(string_remote_ip_address);
 	To.sin_port		 	=	htons(porta);
 	addr_size = sizeof(struct sockaddr_in);
+	printf("lunghezza del messaggio spedito è: %d \n", strlen(msg)+1);
 	/* send to the address */
 	ris = sendto(socket_fd, msg, strlen(msg)+1 , 0, (struct sockaddr*)&To, addr_size);
 	if (ris < 0) {

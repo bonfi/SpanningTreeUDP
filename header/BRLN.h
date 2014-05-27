@@ -19,10 +19,15 @@ typedef struct BRIDGE{
 typedef struct LAN{
 	char 				*IP;
 	short int 			id;
+		/* numero di connessioni con i bridge */
 	unsigned short int 	n_port;
+	
 	unsigned short int 	l_port_in[MAX_NUM_BRIDGE];
+	
 	unsigned short int 	l_port_br[MAX_NUM_BRIDGE];
+	
 	short int 			sock_fd_local[MAX_NUM_LAN];
+	
 	int 				br_id[MAX_NUM_BRIDGE];		/* bridge a cui si collega la lan */
 	
 } LAN;

@@ -35,7 +35,7 @@
  
 #define DEBUG			
 #define MAXBUF			2000
-#define SIZEBUF			10000L
+#define SIZEBUF			50
 #define SOCKET_ERROR	((int)-1)
 
 /* color text in console for debug better */

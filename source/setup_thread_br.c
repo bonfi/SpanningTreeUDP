@@ -27,6 +27,9 @@ void *create_br(void *parametri){
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
 	
+	/*setto la grandezza del messaggio da ricevere con la recvfrom */
+	msg=malloc(sizeof(char)*(SIZEBUF-1));
+	
 	BRIDGE *param = (BRIDGE *)parametri;
 	printf("sono il thread/bridge: %d \n", (param->id));
 	
@@ -83,7 +86,7 @@ void *create_br(void *parametri){
 					sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 					remote_port_number = ntohs(From.sin_port);
 					//stampa_pacchetto_ricevuto(&msg, param->id, remote_port_number, tipo);
-					printf(_KBLU "ricevuto da socketfd %d , nel thread: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
+					printf(_KBLU "ricevuto da socketfd %d , nel thread/BRIDGE: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
 								(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);
 			/* ------------------------------------------------------------------------------------------------------*/
 					

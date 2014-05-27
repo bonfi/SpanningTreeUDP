@@ -108,7 +108,7 @@ void *create_lan(void *parametri){
 								sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 								remote_port_number = ntohs(From.sin_port);
 								
-								printf(_KBLU "ricevuto da socketfd %d , nel thread: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
+								printf(_KBLU "ricevuto da socketfd %d , nel thread/LAN: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
 										(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);
 							}
 						}
