@@ -48,6 +48,7 @@ void *read_file_config(void* arg){
 			n_br=n;
 			for (x=1; x<=n_br; x++){							/* alloco n bridge */
 				b[x]=(BRIDGE *) malloc(sizeof(BRIDGE));
+				if (b[x]==NULL) printf(_KRED "ERRORE MALLOC BRIDGE \n" _KNRM);
 				b[x]->id=x;										/* inizializzo gli id dei bridge*/ 
 				b[x]->n_port=0;
 				printf("Bridge[%d]: %d \n",x,b[x]->id);
@@ -61,7 +62,8 @@ void *read_file_config(void* arg){
 			n_lan=n;
 			for (x=1; x<=n_lan; x++){
 				/* alloco n lan*/
-				l[x]=(LAN *) malloc(sizeof(LAN)); 
+				l[x]=(LAN *) malloc(sizeof(LAN));
+				if (b[x]==NULL) printf(_KRED "ERRORE MALLOC LAN \n" _KNRM);
 				l[x]->id=x;										/*inizializzo gli id delle lan */
 				l[x]->n_port=0;
 				printf("Lan[%d]: %d ",x,l[x]->id);
@@ -69,6 +71,7 @@ void *read_file_config(void* arg){
 				if( (ptr = strchr(tmp_ip, '\n')) != NULL){		/* questo sostituisce \n con \0 nella stringa tmp_ip2 */
 					*ptr = '\0';}
 				strncpy(string_local_ip_address,tmp_ip, 99);	/* copio la stringa in string_ip_local_address */
+				
 				l[x]->IP=string_local_ip_address;				/* salvo dentro la struct l[] */
 				printf("IP: %s\n",l[x]->IP);
 			}
@@ -94,10 +97,10 @@ void *read_file_config(void* arg){
 						fscanf(fp,"%d", &x);						/* prendo numero bridge */
 						/* mi occupo di salavare l'id del br a cui mi voglio connettere, non la porta.
 						poi gestisco tutte le connessioni con la select */
-						l[z]->br_id[x]=x;
+						l[z]->br_id[(l[z]->n_port)]=x;
 						b[x]->n_port = (b[x]->n_port + 1);
 						b[x]->port_lan[z]=z1;
-						printf(" (Log bridge:%d) \n" , x);
+						printf(" (Log bridge:%d) \n" , l[z]->br_id[(l[z]->n_port)]);
 					}
 				}
 			}

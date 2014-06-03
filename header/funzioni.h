@@ -1,4 +1,4 @@
-int quale_lan(char *msg);
+short int quale_lan(char *msg);
 
 char *risp_msg_port(int porta);
 
@@ -12,3 +12,4 @@ void stampa_pacchetto_trasmesso(char *msg, int id_dispositivo, int port, char ti
 
 void invia_msg(short int socket_fd,unsigned short int porta, char *msg, int id_disp, char tipo_disp);
 
+void stampa_tabella(BRIDGE *br);

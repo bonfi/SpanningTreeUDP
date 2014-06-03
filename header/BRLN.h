@@ -28,6 +28,7 @@ typedef struct LAN{
 	
 	short int 			sock_fd_local[MAX_NUM_LAN];
 	
-	int 				br_id[MAX_NUM_BRIDGE];		/* bridge a cui si collega la lan */
+	int 				br_id[10];		/* bridge a cui si collega la lan */
 	
 } LAN;
+

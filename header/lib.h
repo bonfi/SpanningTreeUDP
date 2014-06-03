@@ -20,8 +20,8 @@
 
 
 
-#define MAX_NUM_BRIDGE	5
-#define MAX_NUM_LAN		12
+#define MAX_NUM_BRIDGE	6
+#define MAX_NUM_LAN		13
 
 #include "BRLN.h"
 #include "dati.h"
@@ -33,8 +33,8 @@
 
 
  
-#define DEBUG			
-#define MAXBUF			2000
+#define DEBUG			0			/* 1 per debug, 0 no debug */
+#define MAXBUF			3000
 #define SIZEBUF			50
 #define SOCKET_ERROR	((int)-1)
 

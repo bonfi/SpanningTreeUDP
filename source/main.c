@@ -11,7 +11,7 @@ unsigned short int port_br[6]={9999, 10100, 10200, 10300, 10400, 10500};
 int main(int argc, char *argv[]){
 	
 	pthread_t 			threads_br[MAX_NUM_BRIDGE];
-	pthread_t 			*threads_lan[MAX_NUM_LAN];
+	pthread_t 			threads_lan[MAX_NUM_LAN];
 	pthread_attr_t 		attr;
 	
 	int 				ris, rc, t;
@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
 	
 	DATI *arg_return;
 	arg_return=malloc(sizeof(DATI));
+	if (arg_return==NULL) printf(_KRED "ERRORE MALLOC DATI NEL MAIN \n" _KNRM); 
 	
 	pthread_cond_init (&cond, NULL);
 	pthread_attr_init (&attr);
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]){
 	
 	
 	for(t=1; t <= (arg_return->n_lan);t++){
-		sleep(1);
+		sleep(3);
 		printf(_KGRN"\nmain: Creating thread lan %d\n" _KNRM, arg_return->l[t]->id);
 		printf(_KGRN"main: che ha %d link \n" _KNRM, arg_return->l[t]->n_port);
 		rc = pthread_create(&threads_lan[t], NULL, create_lan, arg_return->l[t] );		/* creo i thread */

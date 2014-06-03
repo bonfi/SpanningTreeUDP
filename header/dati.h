@@ -6,3 +6,4 @@ typedef struct DATI{
 	BRIDGE		*b[MAX_NUM_BRIDGE];
 	
 } DATI;
+
