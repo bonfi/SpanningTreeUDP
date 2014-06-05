@@ -35,12 +35,12 @@ void *create_lan(void *parametri){
 		
 		for (x=0; x<(param->n_port); x++){
 			pthread_mutex_lock (&mutex);																
-			if (DEBUG) printf("inizio  ciclo for per i link LAN//BRIDGE \n");
+			if (DEBUG) printf("inizio ciclo for per i link LAN//BRIDGE \n");
 			
 			/*acquisisco la porta in input che deve usare la lan */
 			local_port_number = param->l_port_in[x];
 			/* creo il socket */
-			socketfd=crea_socket(local_port_number);
+			socketfd=create_socket(local_port_number);
 			
 			/* salvo il fd sel socket creato */
 			param->sock_fd_local[x]=socketfd;
@@ -57,19 +57,18 @@ void *create_lan(void *parametri){
 				printf("id LAN è : %d \n",param->id); 
 				printf("id BR destinazione: %d \n", param->br_id[x+1]);}
 			/*  e poi spedendo il messaggio */
-			invia_msg(socketfd, port_br[param->br_id[x+1]], msg, param->id, tipo);
+			send_msg(socketfd, port_br[param->br_id[x+1]], msg, param->id, tipo);
 			//sleep(1);
 			pthread_mutex_unlock (&mutex);														
 			
-			//pthread_mutex_lock (&mutex);														
 			if (DEBUG) printf("LAN: %d inizio ricezione pacchetti setup link #: %d\n",param->id, x);
 			
 			/* setup datagram da ricevere,salvare */
 			memset(&From, 0, sizeof(From));
 			Fromlen=sizeof(struct sockaddr_in);
-			//pthread_mutex_unlock (&mutex);														
 			
-			pthread_mutex_lock (&mutex);														
+			/*pthread_mutex_lock (&mutex);															
+			pthread_cond_wait (&cond,&mutex);*/
 			/* RECVFROM */
 			msglen = recvfrom ( socketfd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 			if (msglen<0){
@@ -82,10 +81,11 @@ void *create_lan(void *parametri){
 				remote_port_number = ntohs(From.sin_port);
 				stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 			}
+			ris = quale_lan(msg);
+			if (ris==-1){ printf("Errore nel messaggio: porta non valida \n");}
+			else{ param->l_port_br[ris]=ris;}
 			
-			param->l_port_br[x]=quale_lan(msg);
-			
-			pthread_mutex_unlock (&mutex);														
+			/*pthread_mutex_unlock (&mutex);*/														
 			
 		}
 	}
@@ -93,7 +93,7 @@ void *create_lan(void *parametri){
 	for(;;){
 		/* resto in ascolto sui socket creati */
 		read_fd_set=service_fd_set;
-	
+		
 		ris=select(fdmax,&read_fd_set,NULL,NULL,NULL);
 		
 		pthread_mutex_lock (&mutex);														

@@ -27,7 +27,6 @@ void *create_br(void *parametri){
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
 	
-	
 	BRIDGE *param = (BRIDGE *)parametri;
 	if (DEBUG) printf("sono il thread/bridge: %d ", (param->id));
 	
@@ -37,9 +36,9 @@ void *create_br(void *parametri){
 	
 	local_port_number = port_br[param->id];
 	
-	socketfd=crea_socket(local_port_number);
+	socketfd=create_socket(local_port_number);
 	
-	/* mi salvo il socket di default sulla porta di default */
+	/* mi salvo il socket di ascolto sulla porta di default */
 	param->sock_fd=socketfd;
 	/* aggiungo il socket default nel "set di ascolto" / "insieme di fd di ascolto" della select */
 	//FD_SET(socketfd,&read_fd_set);
@@ -54,7 +53,9 @@ void *create_br(void *parametri){
 	
 	for(;;){
 		/* resto in ascolto sulla porta port_br[(param->id)] di default per ogni bridge, all'inizio */
-		read_fd_set=service_fd_set;
+		/* copio il set di ascolto dei fd dei socket */
+		/*read_fd_set=service_fd_set;*/
+		memcpy(&read_fd_set, &service_fd_set, sizeof(service_fd_set));
 		
 		ris=select(fdmax,&read_fd_set,NULL,NULL,NULL);
 		if(ris<0){
@@ -93,11 +94,10 @@ void *create_br(void *parametri){
 						param->port_br_local[lan]=local_port_number;
 						if (param->port_lan[lan] != remote_port_number){
 							printf(_KRED "Errore setup link: (porta lan %d::Num lan %d) non coincide \n" _KNRM,param->port_lan[lan], lan );
-						}else {
-							
+						}else{
 							/* creo un nuovo socket per comunicare con la nuova lan */
-							sock_fd_tmp = crea_socket(local_port_number);
-								
+							sock_fd_tmp = create_socket(local_port_number);
+							
 							param->sock_fd_local[lan]=sock_fd_tmp;
 							/* aggiungo il socket default e il socket appena creato nel "set di ascolto" della select */
 							FD_SET(sock_fd_tmp,&service_fd_set);
@@ -112,8 +112,10 @@ void *create_br(void *parametri){
 							/* creo il messaggio da spedire*/
 							msg=risp_msg_port(local_port_number);
 							
-							invia_msg(sock_fd_tmp, remote_port_number, msg, param->id, tipo);
+							send_msg(sock_fd_tmp, remote_port_number, msg, param->id, tipo);
+							/*stampo tabella del bridge perchè modificata */
 							stampa_tabella(param);
+							/*pthread_cond_signal(&cond);*/
 						}
 					}
 				}
@@ -124,17 +126,17 @@ void *create_br(void *parametri){
 			else{
 				/*numero di socket che hanno ricevuto qualcosa */
 				n=0;
-				for(p=0; p<fdmax; p++){
+				for(p=0; p<=fdmax; p++){
 					
-					if((p!=param->sock_fd) && ((FD_ISSET(p,&read_fd_set))!=0)){
+					if((p!=param->sock_fd) && ((FD_ISSET(p,&read_fd_set))!=0) ){
 						/* il socket_fd p e' gia' stato creato */
 						for( x=1; x<=12; x++){
-							if( p == param->sock_fd_local[x]){
-							
+							if( p == param->sock_fd_local[x] ){
+								
 								/* setup datagram da ricevere,salvare */
 								memset(&From, 0, sizeof(From));
 								Fromlen=sizeof(struct sockaddr_in);
-							
+								
 								/* RECVFROM */
 								msglen = recvfrom ( socketfd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 								if (msglen<0){
@@ -146,7 +148,6 @@ void *create_br(void *parametri){
 									sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 									remote_port_number = ntohs(From.sin_port);
 									stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
-									
 								}
 								n=n+1;
 							}
@@ -154,10 +155,9 @@ void *create_br(void *parametri){
 						}
 					}
 				}
-
-			} /* fine else {} */
+			}	/* fine else {} */
 		}	/* fine gestione ricezione messaggio su socket appartenente a insieme read_fd_set */
-	}		/* fine cliclo infinito for */
-}			/* fine funzione principale thread br */
+	}	/* fine cliclo infinito for */
+}	/* fine funzione principale thread br */
 
 

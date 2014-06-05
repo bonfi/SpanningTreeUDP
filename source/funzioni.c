@@ -5,8 +5,8 @@ short int quale_lan(char *msg){
 	char 			temp[10];
 	char 			*ptr;
 	int 			n;
-	if (strchr(msg, ':')!=NULL){					/* il msg ricevuto contiene la stringa frase[]? */
-		strcpy(temp, (strchr(msg, ':')));
+	if (strchr(msg, ':')!=NULL){					/* il msg ricevuto contiene i : */
+		strcpy(temp, (strchr(msg, ':')));			/* copio in temp la stringa msg dai : in poi */
 		if( (ptr = strchr(temp, ':')) != NULL){		/* sostituisco i : con 0 nella stringa temp */
 			*ptr = '0';}
 		n=atoi(temp);								/* converto la stringa a cui punta temp in poi, in intero */
@@ -48,7 +48,7 @@ char *msg_setup_link(int id){
 }
 
 
-int crea_socket(unsigned short int porta){
+int create_socket(unsigned short int porta){
 	short int				socketfd, ris;
 	struct sockaddr_in		Local;
 	
@@ -77,7 +77,7 @@ int crea_socket(unsigned short int porta){
 	return socketfd;
 }
 
-void invia_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
+void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
 	struct sockaddr_in					To;
 	char string_remote_ip_address[99]	="127.0.0.1";
 	int 								ris, addr_size;
@@ -130,14 +130,21 @@ void stampa_pacchetto_trasmesso(char *msg, int id_dispositivo, int port, char ti
 }
 
 void stampa_tabella(BRIDGE *br){
-	int x;
-	printf("Tabella del Bridge: %d \n", br->id);
+	int x,status;
+	char *st;
+	printf("****************************************************************************\n");
+	printf("*Tabella del Bridge: %d							   * \n", br->id);
 	for(x=1 ; x<=12 ; x++){
 		
 		if (br->port_lan[x]!=NULL && br->port_br_local[x]!=NULL){
-			printf("ID:LAN= %d	|	Porta LAN= %d	|	Porta BRIDGE= %d \n", x, br->port_lan[x], br->port_br_local[x]);
+			status=fcntl(br->sock_fd_local[x], F_GETFL);
+			if (status & O_RDONLY){ st="read only";}
+			else if (status & O_WRONLY){ st="write only";}
+			else if (status & O_RDWR){ st="read and write";}
+			printf("*ID:LAN=%d  |  Porta LAN=%d  |  Porta BRIDGE=%d  |  Status Socket_Br_local=%s* \n", x, br->port_lan[x], br->port_br_local[x], st);
 		}
 	}
+	printf("****************************************************************************\n");
 }
 
 /* da implementare per i bridge
