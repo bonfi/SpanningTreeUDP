@@ -132,19 +132,20 @@ void stampa_pacchetto_trasmesso(char *msg, int id_dispositivo, int port, char ti
 void stampa_tabella(BRIDGE *br){
 	int x,status;
 	char *st;
-	printf("****************************************************************************\n");
-	printf("*Tabella del Bridge: %d							   * \n", br->id);
+	printf("****************************************************\n");
+	printf("*Tabella del Bridge: %d				   * \n", br->id);
 	for(x=1 ; x<=12 ; x++){
 		
 		if (br->port_lan[x]!=NULL && br->port_br_local[x]!=NULL){
-			status=fcntl(br->sock_fd_local[x], F_GETFL);
-			if (status & O_RDONLY){ st="read only";}
-			else if (status & O_WRONLY){ st="write only";}
-			else if (status & O_RDWR){ st="read and write";}
-			printf("*ID:LAN=%d  |  Porta LAN=%d  |  Porta BRIDGE=%d  |  Status Socket_Br_local=%s* \n", x, br->port_lan[x], br->port_br_local[x], st);
+			if (DEBUG) {
+				status=fcntl(br->sock_fd_local[x], F_GETFL);
+				if (status & O_RDONLY){ st="read only";}
+				else if (status & O_WRONLY){ st="write only";}
+				else if (status & O_RDWR){ st="read and write";} }
+			printf("*ID:LAN=%d  |  Porta LAN=%d  |  Porta BRIDGE=%d* \n", x, br->port_lan[x], br->port_br_local[x]);
 		}
 	}
-	printf("****************************************************************************\n");
+	printf("****************************************************\n");
 }
 
 /* da implementare per i bridge

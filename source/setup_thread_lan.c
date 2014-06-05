@@ -67,8 +67,7 @@ void *create_lan(void *parametri){
 			memset(&From, 0, sizeof(From));
 			Fromlen=sizeof(struct sockaddr_in);
 			
-			/*pthread_mutex_lock (&mutex);															
-			pthread_cond_wait (&cond,&mutex);*/
+			/*pthread_cond_wait (&cond,&mutex);*/
 			/* RECVFROM */
 			msglen = recvfrom ( socketfd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 			if (msglen<0){
@@ -85,7 +84,6 @@ void *create_lan(void *parametri){
 			if (ris==-1){ printf("Errore nel messaggio: porta non valida \n");}
 			else{ param->l_port_br[ris]=ris;}
 			
-			/*pthread_mutex_unlock (&mutex);*/														
 			
 		}
 	}
@@ -110,7 +108,7 @@ void *create_lan(void *parametri){
 				
 				if((FD_ISSET(p,&read_fd_set))!=0){
 					/* il socket_fd p e' gia' stato creato */
-					for( x=1; x<5; x++){
+					for( x=0; x<5; x++){
 						if( p == param->sock_fd_local[x]){
 							
 							/* setup datagram da ricevere,salvare */
@@ -118,7 +116,7 @@ void *create_lan(void *parametri){
 							Fromlen=sizeof(struct sockaddr_in);
 							
 							/* RECVFROM */
-							msglen = recvfrom ( socketfd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+							msglen = recvfrom ( p, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 							if (msglen<0){
 								char msgerror[1024];
 								sprintf(msgerror,"recvfrom() failed [err %d] ", errno);

@@ -34,7 +34,7 @@
 
 
  
-#define DEBUG			1			/* 1 per debug, 0 no debug */
+#define DEBUG			0			/* 1 per debug, 0 no debug */
 #define MAXBUF			3000
 #define SIZEBUF			50
 #define SOCKET_ERROR	((int)-1)
