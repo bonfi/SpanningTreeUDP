@@ -16,7 +16,6 @@ int main(int argc, char *argv[]){
 	
 	int 				ris, rc, t;
 	
-	
 	DATI *arg_return;
 	arg_return=malloc(sizeof(DATI));
 	if (arg_return==NULL) printf(_KRED "ERRORE MALLOC DATI NEL MAIN \n" _KNRM); 
@@ -34,11 +33,10 @@ int main(int argc, char *argv[]){
 	
 	printf(_KGRN "finito lettura file config. Sono ritornato nel main\n" _KNRM);
 	
-	
 	for(t=1; t <= arg_return->n_br;t++){
 		
 		printf(_KGRN"\nmain: Creating thread bridge %d\n" _KNRM, (t));
-		rc = pthread_create(&threads_br[t], NULL, create_br, arg_return->b[t] );		/* creo i thread */
+		rc = pthread_create(&threads_br[t], NULL, create_br, (void *)arg_return->b[t] );		/* creo i thread */
 		if (rc){
 			printf("ERROR; return code from pthread_create() is %d\n",rc);
 			exit(-1);
@@ -47,12 +45,12 @@ int main(int argc, char *argv[]){
 	}
 	
 	
-	
 	for(t=1; t <= (arg_return->n_lan);t++){
-		sleep(3);
+		sleep(1);
 		printf(_KGRN"\nmain: Creating thread lan %d\n" _KNRM, arg_return->l[t]->id);
 		printf(_KGRN"main: che ha %d link \n" _KNRM, arg_return->l[t]->n_port);
-		rc = pthread_create(&threads_lan[t], NULL, create_lan, arg_return->l[t] );		/* creo i thread */
+		//sleep(1);
+		rc = pthread_create(&threads_lan[t], NULL, create_lan, (void *)arg_return->l[t] );		/* creo i thread */
 		
 		if (rc){
 			printf("ERROR; return code from pthread_create() is %d\n",rc);
@@ -62,7 +60,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	
-	sleep(3);
+	sleep(1);
 	printf("fine main\n"); fflush(stdout);
 	
 	pthread_exit (NULL);

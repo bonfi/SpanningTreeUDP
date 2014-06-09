@@ -17,11 +17,16 @@ void *create_lan(void *parametri){
 	
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
-	
+	pthread_mutex_lock (&mutex);																
 	/*setto la grandezza del messaggio da ricevere con la recvfrom */
-	msg=malloc(sizeof(char)*(SIZEBUF));
-	
+	/*printf("malloc dentro il thread lan\n");*/
+	/*sleep(1);*/
+	if((msg=malloc(sizeof(char)*(SIZEBUF)))==NULL){
+		printf("malloc() failed [err %d] ", errno);
+		pthread_exit (NULL);}
+	//sleep(1);
 	LAN *param = (LAN *)parametri;
+	pthread_mutex_unlock (&mutex);																
 	if (DEBUG) printf("sono il thread/LAN: %d \n", (param->id));
 	
 	FD_ZERO(&write_fd_set);
@@ -49,8 +54,7 @@ void *create_lan(void *parametri){
 			FD_SET(socketfd,&service_fd_set);
 			
 			if (socketfd > (fdmax-1)){
-				fdmax=socketfd + 1;
-			}
+				fdmax=socketfd + 1;}
 			/* mi collego al rispettivo bridge, creando prima il messaggio di setup_connection */
 			msg=msg_setup_link(param->id);
 			if (DEBUG){
@@ -80,10 +84,9 @@ void *create_lan(void *parametri){
 				remote_port_number = ntohs(From.sin_port);
 				stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 			}
-			ris = quale_lan(msg);
+			ris = quale_porta(msg);
 			if (ris==-1){ printf("Errore nel messaggio: porta non valida \n");}
 			else{ param->l_port_br[ris]=ris;}
-			
 			
 		}
 	}
@@ -125,9 +128,7 @@ void *create_lan(void *parametri){
 							}else{
 								sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 								remote_port_number = ntohs(From.sin_port);
-								stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
-								/*printf(_KBLU "ricevuto da socketfd %d , nel thread/LAN: %d , msg: \"%s\" len %d, from host %s, port %d\n", socketfd,
-										(param->id + 1), msg, msglen, string_remote_ip_address, remote_port_number);*/
+								if (DEBUG) {stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);}
 							}
 						}
 					}
@@ -137,3 +138,4 @@ void *create_lan(void *parametri){
 			/* fine gestione ricezione messaggio su socket appartenente a insieme read_fd_set */
 	}		/* fine cliclo infinito for */
 }			/* fine funzione principale thread br */
+

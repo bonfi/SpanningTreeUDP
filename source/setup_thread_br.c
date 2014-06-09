@@ -46,16 +46,17 @@ void *create_br(void *parametri){
 	FD_SET(socketfd,&service_fd_set);
 	fdmax=socketfd+1;
 	
-	pthread_mutex_unlock (&mutex);																		
 	
 	/*setto la grandezza del messaggio da ricevere con la recvfrom */
-	msg=malloc(sizeof(char)*(SIZEBUF));
+	if((msg=malloc(sizeof(char)*(SIZEBUF)))==NULL){
+		printf("malloc() failed [err %d] ", errno);
+		pthread_exit (NULL);}
+	pthread_mutex_unlock (&mutex);																		
 	
 	for(;;){
 		/* resto in ascolto sulla porta port_br[(param->id)] di default per ogni bridge, all'inizio */
 		/* copio il set di ascolto dei fd dei socket */
-		/*read_fd_set=service_fd_set;*/
-		memcpy(&read_fd_set, &service_fd_set, sizeof(service_fd_set));
+		read_fd_set=service_fd_set;
 		
 		ris=select(fdmax,&read_fd_set,NULL,NULL,NULL);
 		if(ris<0){
@@ -147,7 +148,7 @@ void *create_br(void *parametri){
 								}else{
 									sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 									remote_port_number = ntohs(From.sin_port);
-									stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+									if (DEBUG) {stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);}
 								}
 								n=n+1;
 							}

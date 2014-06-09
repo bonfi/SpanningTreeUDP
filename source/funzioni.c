@@ -1,20 +1,33 @@
 #include "lib.h"
 #include "extern.h"
 
+/* funzione che trova il numero che c'è dopo i : in una stringa
+   restituisce l'intero */
 short int quale_lan(char *msg){
 	char 			temp[10];
 	char 			*ptr;
 	int 			n;
+	const char 		s[2] = ":";
 	if (strchr(msg, ':')!=NULL){					/* il msg ricevuto contiene i : */
-		strcpy(temp, (strchr(msg, ':')));			/* copio in temp la stringa msg dai : in poi */
-		if( (ptr = strchr(temp, ':')) != NULL){		/* sostituisco i : con 0 nella stringa temp */
-			*ptr = '0';}
-		n=atoi(temp);								/* converto la stringa a cui punta temp in poi, in intero */
+		ptr = strtok(msg , s);
+		ptr = strtok(NULL , s);
+		/* strcpy(temp, (strchr(msg, ':')));			 copio in temp la stringa msg dai : in poi */
+		/*if( (ptr = strchr(temp, ':')) != NULL){		sostituisco i : con 0 nella stringa temp */
+		/*	*ptr = '0';} */
+		n=atoi(ptr);								/* converto la stringa a cui punta temp in poi, in intero */
 		/* printf("%d \n",n); */
 	}else n=-1;
 	return n;
 }
 
+/*stesso funzionamento della funzione quale_lan*/
+short int quale_porta(char *msg){
+	int 			n;
+	n=quale_lan(msg);
+	return n;
+}
+
+/* crea la stringa di risposta alle lan, comunicandogli quale porta devono usare */
 char *risp_msg_port(int porta){
 	char	*mess;
 	char	*risp="Dobbiamo comunicare sulla porta:";
@@ -29,17 +42,16 @@ char *risp_msg_port(int porta){
 	return mess;
 }
 
+/* crea la stringa di setup_link per le lan da mandare ai bridge */
 char *msg_setup_link(int id){
 	/* printf(_KCYN "id passato a funz : %d \n" _KNRM,id); */
-	
 	char		*mess;
 	char		*frase="Ciao, sono la lan:";
 	char		id_lan[5];
 	
 	sprintf(id_lan, "%d", id);
-	
-	mess=malloc(sizeof(frase)+sizeof(id_lan));
-	
+	sleep(1);
+	mess=(char*)malloc(sizeof(char)*(strlen(frase)+strlen(id_lan)+2));
 	strcpy(mess,frase);
 	strcat(mess, id_lan);
 	strcat(mess, "\0");
@@ -47,7 +59,7 @@ char *msg_setup_link(int id){
 	return mess;
 }
 
-
+/* crea un socket e lo binda su localhost */
 int create_socket(unsigned short int porta){
 	short int				socketfd, ris;
 	struct sockaddr_in		Local;
@@ -77,6 +89,8 @@ int create_socket(unsigned short int porta){
 	return socketfd;
 }
 
+/* funzione che invia un messaggio msg alla porta */
+/* char tipo_dip serve solo per la stampa del messaggio */
 void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
 	struct sockaddr_in					To;
 	char string_remote_ip_address[99]	="127.0.0.1";
@@ -110,7 +124,6 @@ void stampa_pacchetto_ricevuto(char *msg, int id_dispositivo, int port, char tip
 	printf(_KBLU "Messaggio ricevuto dal socket %d \n", socket);
 	printf(_KBLU "da %s %d dalla porta: %d Messaggio: '%s' ", tipo_dispositivo, id_dispositivo , port, msg);
 	printf(_KNRM "\n");
-
 }
 
 void stampa_pacchetto_trasmesso(char *msg, int id_dispositivo, int port, char tipo, short int socket){
@@ -126,7 +139,6 @@ void stampa_pacchetto_trasmesso(char *msg, int id_dispositivo, int port, char ti
 	printf(_KBLU "Messaggio inviato dal socket %d \n", socket);
 	printf(_KBLU "da %s: %d alla porta: %d Messaggio: '%s' ", tipo_dispositivo, id_dispositivo, port, msg);
 	printf(_KNRM "\n");
-	
 }
 
 void stampa_tabella(BRIDGE *br){
@@ -147,9 +159,3 @@ void stampa_tabella(BRIDGE *br){
 	}
 	printf("****************************************************\n");
 }
-
-/* da implementare per i bridge
-
-stampa_tabella 
-
-*/

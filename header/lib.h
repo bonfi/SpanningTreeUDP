@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,7 +18,8 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-
+typedef int bool;
+enum { false, true };
 
 #define MAX_NUM_BRIDGE	6
 #define MAX_NUM_LAN		13
@@ -36,7 +36,7 @@
  
 #define DEBUG			0			/* 1 per debug, 0 no debug */
 #define MAXBUF			3000
-#define SIZEBUF			50
+#define SIZEBUF			100
 #define SOCKET_ERROR	((int)-1)
 
 /* color text in console for debug better */

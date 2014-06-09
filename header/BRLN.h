@@ -13,22 +13,24 @@ typedef struct BRIDGE{
 	unsigned short int 		port_lan[MAX_NUM_LAN];
 	/* socket default di ascolto */
 	short int 				sock_fd;
+	bool					state;
+	bool					root;
 	
 } BRIDGE;
 
 typedef struct LAN{
 	char 				*IP;
 	short int 			id;
-		/* numero di connessioni con i bridge */
+	/* numero di connessioni con i bridge */
 	unsigned short int 	n_port;
-	
+	/* porte socket delle lan */
 	unsigned short int 	l_port_in[MAX_NUM_BRIDGE];
-	
+	/* porte socket dei bridge */
 	unsigned short int 	l_port_br[MAX_NUM_BRIDGE];
-	
+	/* socket_fd dei socket della lan */
 	short int 			sock_fd_local[MAX_NUM_LAN];
-	
-	int 				br_id[10];		/* bridge a cui si collega la lan */
+	/* id dei bridge a cui la lan è connessa */
+	int 				br_id[10];
 	
 } LAN;
 
