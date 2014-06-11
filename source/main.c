@@ -33,6 +33,7 @@ int main(int argc, char *argv[]){
 	
 	printf(_KGRN "finito lettura file config. Sono ritornato nel main\n" _KNRM);
 	
+	/* creo i threads dei Bridge */
 	for(t=1; t <= arg_return->n_br;t++){
 		
 		printf(_KGRN"\nmain: Creating thread bridge %d\n" _KNRM, (t));
@@ -44,24 +45,28 @@ int main(int argc, char *argv[]){
 		sleep(1);
 	}
 	
-	
+	/* creo i threads delle LAN */
 	for(t=1; t <= (arg_return->n_lan);t++){
-		sleep(1);
+		
 		printf(_KGRN"\nmain: Creating thread lan %d\n" _KNRM, arg_return->l[t]->id);
 		printf(_KGRN"main: che ha %d link \n" _KNRM, arg_return->l[t]->n_port);
-		//sleep(1);
+		sleep(1);
 		rc = pthread_create(&threads_lan[t], NULL, create_lan, (void *)arg_return->l[t] );		/* creo i thread */
-		
 		if (rc){
 			printf("ERROR; return code from pthread_create() is %d\n",rc);
 			exit(-1);
 		}
-	
+		sleep(2);
 	}
 	
+	sleep(8);
 	
-	sleep(1);
-	printf("fine main\n"); fflush(stdout);
+	pthread_mutex_lock(&mutex);
+	pthread_cond_broadcast(&cond);
+	pthread_mutex_unlock(&mutex);
+	
+	
+	printf("fine main\n"); /*fflush(stdout);*/
 	
 	pthread_exit (NULL);
 	

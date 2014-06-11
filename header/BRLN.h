@@ -13,8 +13,10 @@ typedef struct BRIDGE{
 	unsigned short int 		port_lan[MAX_NUM_LAN];
 	/* socket default di ascolto */
 	short int 				sock_fd;
-	bool					state;
-	bool					root;
+	/* indica bridge attivo o spento */
+	int						state_l;
+	/* indica stato root del bridge */
+	int						state_r;
 	
 } BRIDGE;
 

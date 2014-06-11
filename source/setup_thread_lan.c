@@ -2,32 +2,31 @@
 #include "extern.h"
 
 void *create_lan(void *parametri){
-	
 	char					tipo='L';
 	int 					br_id;
 	struct sockaddr_in		From;
 	char					string_remote_ip_address[100];
 	unsigned short int		remote_port_number, local_port_number;
-	int						sock_fd_tmp, p, x, msglen,ris, sock_fd_br[10];
+	unsigned short int		msglen;
+	short int				sock_fd_tmp, p, x, br, ris, sock_fd_br[10];
 	short int 				socketfd;
 	unsigned int			Fromlen;
-	char					*msg,*msg2;
-	unsigned short int		required_remote_port_number;
-	char					string_required_remote_ip_address[100];
+	char					*msg;
 	
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
+	
 	pthread_mutex_lock (&mutex);																
 	/*setto la grandezza del messaggio da ricevere con la recvfrom */
 	/*printf("malloc dentro il thread lan\n");*/
-	/*sleep(1);*/
+	
 	if((msg=malloc(sizeof(char)*(SIZEBUF)))==NULL){
 		printf("malloc() failed [err %d] ", errno);
 		pthread_exit (NULL);}
-	//sleep(1);
+	
 	LAN *param = (LAN *)parametri;
 	pthread_mutex_unlock (&mutex);																
-	if (DEBUG) printf("sono il thread/LAN: %d \n", (param->id));
+	if (DEBUG) printf("sono il thread/LAN: %d e ho: %d link\n", (param->id), param->n_port);
 	
 	FD_ZERO(&write_fd_set);
 	FD_ZERO(&read_fd_set);
@@ -48,7 +47,7 @@ void *create_lan(void *parametri){
 			socketfd=create_socket(local_port_number);
 			
 			/* salvo il fd sel socket creato */
-			param->sock_fd_local[x]=socketfd;
+			param->sock_fd_local[param->br_id[x+1]]=socketfd;
 			
 			/* aggiungo il socket default nel "set di ascolto" / "insieme di fd di ascolto" della select */
 			FD_SET(socketfd,&service_fd_set);
@@ -61,8 +60,8 @@ void *create_lan(void *parametri){
 				printf("id LAN è : %d \n",param->id); 
 				printf("id BR destinazione: %d \n", param->br_id[x+1]);}
 			/*  e poi spedendo il messaggio */
-			send_msg(socketfd, port_br[param->br_id[x+1]], msg, param->id, tipo);
-			//sleep(1);
+			send_msg((param->sock_fd_local[param->br_id[x+1]]), port_br[param->br_id[x+1]], msg, param->id, tipo);
+			sleep(1);
 			pthread_mutex_unlock (&mutex);														
 			
 			if (DEBUG) printf("LAN: %d inizio ricezione pacchetti setup link #: %d\n",param->id, x);
@@ -71,9 +70,8 @@ void *create_lan(void *parametri){
 			memset(&From, 0, sizeof(From));
 			Fromlen=sizeof(struct sockaddr_in);
 			
-			/*pthread_cond_wait (&cond,&mutex);*/
 			/* RECVFROM */
-			msglen = recvfrom ( socketfd, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+			msglen = recvfrom ( (param->sock_fd_local[param->br_id[x+1]]), msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 			if (msglen<0){
 				char msgerror[1024];
 				sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
@@ -86,8 +84,7 @@ void *create_lan(void *parametri){
 			}
 			ris = quale_porta(msg);
 			if (ris==-1){ printf("Errore nel messaggio: porta non valida \n");}
-			else{ param->l_port_br[ris]=ris;}
-			
+			else{ param->l_port_br[param->br_id[x+1]]=ris;}
 		}
 	}
 	
@@ -97,29 +94,26 @@ void *create_lan(void *parametri){
 		
 		ris=select(fdmax,&read_fd_set,NULL,NULL,NULL);
 		
-		pthread_mutex_lock (&mutex);														
 		if(ris<0){
 			if (errno!=EINTR){
-				printf(_KRED "Error in select: errno diverso da EINTR \n");
+				printf(_KRED "Error in select: errno diverso da EINTR \n" _KNRM);
 			}
 		}
 		/* se ris>0 ho ricevuto qualcosa in read_fd_set */
 		if (ris>0){
-			
 			/* in che socket ho ricevuto qualcosa? */
 			for(p=0; p<fdmax; p++){
 				
 				if((FD_ISSET(p,&read_fd_set))!=0){
 					/* il socket_fd p e' gia' stato creato */
-					for( x=0; x<5; x++){
+					for( x=0; x<(MAX_NUM_BRIDGE-1); x++){
 						if( p == param->sock_fd_local[x]){
-							
 							/* setup datagram da ricevere,salvare */
 							memset(&From, 0, sizeof(From));
 							Fromlen=sizeof(struct sockaddr_in);
 							
 							/* RECVFROM */
-							msglen = recvfrom ( p, msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+							msglen = recvfrom ( param->sock_fd_local[x], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 							if (msglen<0){
 								char msgerror[1024];
 								sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
@@ -128,13 +122,27 @@ void *create_lan(void *parametri){
 							}else{
 								sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 								remote_port_number = ntohs(From.sin_port);
-								if (DEBUG) {stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);}
+								stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+								
+								/* il messaggio ricevuto è di tipo 'setup_root_br' */
+								if (quale_tipo_msg(msg)==2){
+									br=quale_bridge(msg);
+									if (DEBUG){
+										printf("sono la lan: %d - il messaggio proviene dal br: %d\n", param->id, br);
+										printf("quindi dalla porta: %d \n",param->l_port_br[br]);}
+									for (ris=1; ris<=(MAX_NUM_BRIDGE-1); ris++){
+										if (ris!=br && param->l_port_br[ris]!=NULL){
+											send_msg(param->sock_fd_local[ris], param->l_port_br[ris], msg, param->id, tipo);
+										}
+									}
+								}
+								/* fine gestione 'setup_root_br' */
 							}
 						}
 					}
 				}
 			}
-		}pthread_mutex_unlock (&mutex);														
+		}
 			/* fine gestione ricezione messaggio su socket appartenente a insieme read_fd_set */
 	}		/* fine cliclo infinito for */
 }			/* fine funzione principale thread br */

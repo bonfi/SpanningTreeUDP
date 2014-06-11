@@ -18,8 +18,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-typedef int bool;
-enum { false, true };
 
 #define MAX_NUM_BRIDGE	6
 #define MAX_NUM_LAN		13
@@ -27,6 +25,8 @@ enum { false, true };
 #include "BRLN.h"
 #include "dati.h"
 #include "funzioni.h"
+#include "funz_setup_link.h"
+#include "funz_root_br.h"
 #include "read_file_config.h"
 #include "setup_thread_lan.h"
 #include "setup_thread_br.h"
@@ -34,9 +34,9 @@ enum { false, true };
 
 
  
-#define DEBUG			0			/* 1 per debug, 0 no debug */
+#define DEBUG			1			/* 1 per debug, 0 no debug */
 #define MAXBUF			3000
-#define SIZEBUF			100
+#define SIZEBUF			150
 #define SOCKET_ERROR	((int)-1)
 
 /* color text in console for debug better */

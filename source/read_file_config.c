@@ -51,6 +51,8 @@ void *read_file_config(void* arg){
 				if (b[x]==NULL) printf(_KRED "ERRORE MALLOC BRIDGE \n" _KNRM);
 				b[x]->id=x;										/* inizializzo gli id dei bridge*/ 
 				b[x]->n_port=0;
+				b[x]->state_l=1;
+				b[x]->state_r=1;
 				printf("Bridge[%d]: %d \n",x,b[x]->id);
 			}
 			arg_return0->n_br=n_br;

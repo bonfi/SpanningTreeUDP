@@ -1,63 +1,36 @@
 #include "lib.h"
 #include "extern.h"
 
-/* funzione che trova il numero che c'è dopo i : in una stringa
-   restituisce l'intero */
-short int quale_lan(char *msg){
+/* funzione che restituisce il tipo di msg:
+ * 1=setup_link
+ * 2=setup_root_br
+ * 3=calc_dist
+ * 4=std */
+int quale_tipo_msg(char *msg){
 	char 			temp[10];
+	char			*cpy;
 	char 			*ptr;
-	int 			n;
-	const char 		s[2] = ":";
-	if (strchr(msg, ':')!=NULL){					/* il msg ricevuto contiene i : */
-		ptr = strtok(msg , s);
-		ptr = strtok(NULL , s);
-		/* strcpy(temp, (strchr(msg, ':')));			 copio in temp la stringa msg dai : in poi */
-		/*if( (ptr = strchr(temp, ':')) != NULL){		sostituisco i : con 0 nella stringa temp */
-		/*	*ptr = '0';} */
-		n=atoi(ptr);								/* converto la stringa a cui punta temp in poi, in intero */
-		/* printf("%d \n",n); */
-	}else n=-1;
+	const char 		*s = ":";
+	char			*type[4]={"setup_link", "setup_root_br", "calc_dist","std"};
+	char			*one="tipo_msg";
+	int				n;
+	cpy = (char *)malloc(sizeof(char)*(strlen(msg)+2));
+	strcpy( cpy, msg);
+	ptr = strtok(cpy , s);
+	if (ptr!=NULL){
+		if(!strcmp(ptr,one)){
+			ptr = strtok(NULL, s);
+			if (!strcmp(ptr,type[0])) n=1;
+			else if(!strcmp(ptr,type[1])) n=2;
+			else if(!strcmp(ptr,type[2])) n=3;
+			else if(!strcmp(ptr,type[3])) n=4;
+		}
+	}else{ n=-1;}
 	return n;
 }
 
-/*stesso funzionamento della funzione quale_lan*/
-short int quale_porta(char *msg){
-	int 			n;
-	n=quale_lan(msg);
-	return n;
-}
-
-/* crea la stringa di risposta alle lan, comunicandogli quale porta devono usare */
-char *risp_msg_port(int porta){
-	char	*mess;
-	char	*risp="Dobbiamo comunicare sulla porta:";
-	char	port_msg[5];
-	
-	sprintf(port_msg, "%d", porta);
-	mess=malloc(sizeof(risp)+sizeof(port_msg));
-	
-	strcpy(mess,risp);
-	strcat(mess, port_msg);
-	strcat(mess, "\0");
-	return mess;
-}
-
-/* crea la stringa di setup_link per le lan da mandare ai bridge */
-char *msg_setup_link(int id){
-	/* printf(_KCYN "id passato a funz : %d \n" _KNRM,id); */
-	char		*mess;
-	char		*frase="Ciao, sono la lan:";
-	char		id_lan[5];
-	
-	sprintf(id_lan, "%d", id);
-	sleep(1);
-	mess=(char*)malloc(sizeof(char)*(strlen(frase)+strlen(id_lan)+2));
-	strcpy(mess,frase);
-	strcat(mess, id_lan);
-	strcat(mess, "\0");
-	
-	return mess;
-}
+/* prototipo del messaggio : 
+tipo_msg:setup_link:msg:ciao, sono la lan:2 */
 
 /* crea un socket e lo binda su localhost */
 int create_socket(unsigned short int porta){
@@ -90,7 +63,7 @@ int create_socket(unsigned short int porta){
 }
 
 /* funzione che invia un messaggio msg alla porta */
-/* char tipo_dip serve solo per la stampa del messaggio */
+/* "char tipo_dip" serve solo per la stampa del messaggio */
 void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
 	struct sockaddr_in					To;
 	char string_remote_ip_address[99]	="127.0.0.1";
@@ -108,7 +81,7 @@ void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_d
 		printf ("sendto() failed, Error: %d \"%s\"\n", errno,strerror(errno));
 		exit(1);
 	}else
-		if (DEBUG) {stampa_pacchetto_trasmesso(msg, id_disp, porta, tipo_disp, socket_fd);}
+		stampa_pacchetto_trasmesso(msg, id_disp, porta, tipo_disp, socket_fd);
 }
 
 void stampa_pacchetto_ricevuto(char *msg, int id_dispositivo, int port, char tipo, short int socket){
