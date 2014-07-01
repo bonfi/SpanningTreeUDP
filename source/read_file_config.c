@@ -53,6 +53,7 @@ void *read_file_config(void* arg){
 				b[x]->n_port=0;
 				b[x]->state_l=1;
 				b[x]->state_r=1;
+				b[x]->num_lan=MAX_NUM_LAN-1;
 				printf("Bridge[%d]: %d \n",x,b[x]->id);
 			}
 			arg_return0->n_br=n_br;
@@ -68,6 +69,7 @@ void *read_file_config(void* arg){
 				if (b[x]==NULL) printf(_KRED "ERRORE MALLOC LAN \n" _KNRM);
 				l[x]->id=x;										/*inizializzo gli id delle lan */
 				l[x]->n_port=0;
+				l[x]->num_br=MAX_NUM_BRIDGE-1;
 				printf("Lan[%d]: %d ",x,l[x]->id);
 				fgets(tmp_ip,BUFF_CHAR,fp);						/* prendo la stringa */ 
 				if( (ptr = strchr(tmp_ip, '\n')) != NULL){		/* questo sostituisce \n con \0 nella stringa tmp_ip2 */

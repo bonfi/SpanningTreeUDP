@@ -20,6 +20,9 @@ funz_setup_link: ${DIR_SRC}/funz_setup_link.c
 funz_root_br: ${DIR_SRC}/funz_root_br.c
 	gcc -o ${DIR_OBJ}/funz_root_br.o -I ${DIR_HDR} -c ${GCCFLAGS} ${DIR_SRC}/funz_root_br.c
 
+funz_spanning_tree: ${DIR_SRC}/funz_spanning_tree.c
+	gcc -o ${DIR_OBJ}/funz_spanning_tree.o -I ${DIR_HDR} -c ${GCCFLAGS} ${DIR_SRC}/funz_spanning_tree.c
+
 read_file_config: ${DIR_SRC}/read_file_config.c
 	gcc -o ${DIR_OBJ}/read_file_config.o -I ${DIR_HDR} -c ${GCCFLAGS} ${DIR_SRC}/read_file_config.c
 	
@@ -35,7 +38,7 @@ setup_thread_lan: ${DIR_SRC}/setup_thread_lan.c
 
 # Linker
 
-simulation.bin: main funzioni funz_setup_link funz_root_br setup_thread_br setup_thread_lan read_file_config
+simulation.bin: main funzioni funz_setup_link funz_root_br funz_spanning_tree setup_thread_br setup_thread_lan read_file_config
 	gcc -o simulation.bin ${LINKERFLAGS} ${DIR_OBJ}/*.o
 
 # Cancellazione dei file di compilazione

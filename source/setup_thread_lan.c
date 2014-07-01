@@ -12,7 +12,6 @@ void *create_lan(void *parametri){
 	short int 				socketfd;
 	unsigned int			Fromlen;
 	char					*msg;
-	
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
 	
@@ -124,19 +123,18 @@ void *create_lan(void *parametri){
 								remote_port_number = ntohs(From.sin_port);
 								stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 								
-								/* il messaggio ricevuto è di tipo 'setup_root_br' */
+								/* il messaggio ricevuto è di tipo 'funz_spanning_tree' */
 								if (quale_tipo_msg(msg)==2){
-									br=quale_bridge(msg);
+									br=mit_bridge(msg);
 									if (DEBUG){
 										printf("sono la lan: %d - il messaggio proviene dal br: %d\n", param->id, br);
 										printf("quindi dalla porta: %d \n",param->l_port_br[br]);}
-									for (ris=1; ris<=(MAX_NUM_BRIDGE-1); ris++){
+									for (ris=1; ris<=(param->num_br); ris++){
 										if (ris!=br && param->l_port_br[ris]!=NULL){
 											send_msg(param->sock_fd_local[ris], param->l_port_br[ris], msg, param->id, tipo);
 										}
 									}
 								}
-								/* fine gestione 'setup_root_br' */
 							}
 						}
 					}

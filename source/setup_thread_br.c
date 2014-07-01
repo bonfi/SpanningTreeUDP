@@ -20,12 +20,12 @@ void *create_br(void *parametri){
 	char					string_remote_ip_address[100];
 	unsigned short int		remote_port_number, local_port_number;
 	int						msglen;
-	short int				socketfd, sock_fd_tmp, p, x, n, ris, br, root_msg, sock_fd_br[10];
+	short int				socketfd, sock_fd_tmp, p, x, n, ris, br, root_id_temp_br, sock_fd_br[10];
 	unsigned int			Fromlen;
 	char					*msg;
 	unsigned short int		required_remote_port_number;
 	char					string_required_remote_ip_address[100];
-	
+	struct timeval			timeout;
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
 	
@@ -35,6 +35,8 @@ void *create_br(void *parametri){
 	FD_ZERO(&write_fd_set);
 	FD_ZERO(&read_fd_set);
 	FD_ZERO(&service_fd_set);
+	
+	
 	
 	local_port_number = port_br[param->id];
 	
@@ -56,17 +58,35 @@ void *create_br(void *parametri){
 	
 	
 	for(;;){
+		
+		timeout.tv_sec=10;
+		timeout.tv_usec = 0;
+	
 		/* resto in ascolto sulla porta port_br[(param->id)] di default per ogni bridge, all'inizio */
 		/* copio il set di ascolto dei fd dei socket */
 		read_fd_set=service_fd_set;
 		
-		ris=select(fdmax,&read_fd_set,NULL,NULL,NULL);
+		ris=select(fdmax,&read_fd_set,NULL,NULL,&timeout);
 		if(ris<0){
 			if (errno!=EINTR){
 				printf(_KRED "Error in select: errno diverso da EINTR \n");
 			}
 		}if(ris==-1){ printf(_KRED "Error in select \n");}
 		/* se ris>0 ho ricevuto qualcosa in read_fd_set */
+		if (ris==0){ /* timeout expired */
+			if (param->state_r==1){
+			/* -- spanning-three procedure or spanning tree protocol-- 
+				printf("CAZZO TIMEOUT SCADUTO_ sono il br:%d\n", param->id);
+				msg=msg_cfg_stp(param->id);
+				
+				for (x=1; x<=(param->num_lan); x++){
+				if (param->port_lan[x]!=NULL){
+					send_msg(param->sock_fd_local[x], param->port_lan[x], msg, param->id, tipo);
+					}
+				}*/
+				
+			}
+		}
 		if (ris>0){
 			
 			/* ho ricevuto un msg nel socket_br principale? */
@@ -126,12 +146,18 @@ void *create_br(void *parametri){
 								
 								if(cont == param->n_port){
 									pthread_mutex_lock (&mutex);
-									/* aspetto il segnale dal main */
+									
+									/* aspetto il segnale dal main per iniziare la procedura dello SPANNING TREE*/
 									pthread_cond_wait(&cond, &mutex);
+									/* compongo il messaggio iniziare di configurazione della rete: 
+										Cfg-msg da bridge X: <Y, d, X>
+										Y: id di presunta root  (inizialmente il proprio id)
+										d: distanza di X da presunta root (inizialmente 0)
+										X: id di bridge mittente (inizialmente il proprio id)
+									 */
+									msg=msg_cfg_stp(param->id,0,param->id);
 									
-									msg=msg_setup_root_br(param->id, param->state_r);
-									
-									for (x=1; x<=(MAX_NUM_LAN-1); x++){
+									for (x=1; x<=(param->num_lan); x++){
 										if (param->port_lan[x]!=NULL){
 											send_msg(param->sock_fd_local[x], param->port_lan[x], msg, param->id, tipo);
 											}
@@ -173,20 +199,31 @@ void *create_br(void *parametri){
 									stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 								}
 								n=n+1;
-								/* il messaggio ricevuto è di tipo 'setup_root_br' */
+								
+								/* il messaggio ricevuto è di tipo 'spanning_tree' */
+								pthread_mutex_lock(&mutex);
 								if (quale_tipo_msg(msg)==2){
-									br=quale_bridge(msg);
-									if (DEBUG){
-										printf("sono il br: %d - il messaggio proviene dal br: %d\n", param->id, br);
-										}
-									root_msg=stato_br_root(msg);
-									if (root_msg==1 && param->state_r==1){
-										if (br < (param->id)){
-											param->state_r=0;
-											printf(_KCYN"sono il br: %d e non sono più root \n" _KNRM);
+									if(param->state_r==1){
+										br=mit_bridge(msg);
+										if (DEBUG){
+											printf("sono il br: %d - il messaggio proviene dal br: %d\n", param->id, br);
+											}
+										root_id_temp_br=id_temp_root_br(msg);
+										if (param->id > root_id_temp_br){
+												param->state_r=0;
+												printf(_KCYN"sono il br: %d e non sono più root \n" _KNRM, param->id);
 										}
 									}
 								}
+								if(DEBUG){ printf("sono il br: %d - root: %d\n", param->id, param->state_r);}
+								sleep(1);
+								pthread_mutex_unlock(&mutex);
+								
+								/*signal(SIGALRM, monitor);
+								alarm(1);
+								*/
+								
+								
 							}
 							if(n==ris){ break;}
 						}

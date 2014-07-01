@@ -27,6 +27,7 @@
 #include "funzioni.h"
 #include "funz_setup_link.h"
 #include "funz_root_br.h"
+#include "funz_spanning_tree.h"
 #include "read_file_config.h"
 #include "setup_thread_lan.h"
 #include "setup_thread_br.h"

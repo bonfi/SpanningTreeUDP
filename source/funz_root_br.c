@@ -27,23 +27,6 @@ char *msg_setup_root_br(int id, int root){
 	return mess;
 }
 
-int quale_bridge (char *msg){
-	int				br;
-	char 			*ptr,*result;
-	const char 		*s = ":";
-	char			*str="Sono il bridge";
-	
-	ptr=malloc(sizeof(char)*(strlen(msg)+2));
-	memcpy(ptr, msg,((strlen(msg))+1));
-	result = strtok(ptr , s);
-	while (strcmp(result,str)){
-		result = strtok(NULL , s);
-		}
-	result = strtok(NULL , s);
-	br=atoi(result);
-	return br;
-}
-
 int stato_br_root(char *msg){
 	int				stato;
 	char 			*ptr,*result;

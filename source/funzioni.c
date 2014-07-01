@@ -3,15 +3,14 @@
 
 /* funzione che restituisce il tipo di msg:
  * 1=setup_link
- * 2=setup_root_br
- * 3=calc_dist
- * 4=std */
+ * 2=spanning_tree
+ * 3=std */
 int quale_tipo_msg(char *msg){
 	char 			temp[10];
 	char			*cpy;
 	char 			*ptr;
 	const char 		*s = ":";
-	char			*type[4]={"setup_link", "setup_root_br", "calc_dist","std"};
+	char			*type[3]={"setup_link", "spanning_tree","std"};
 	char			*one="tipo_msg";
 	int				n;
 	cpy = (char *)malloc(sizeof(char)*(strlen(msg)+2));
@@ -23,7 +22,6 @@ int quale_tipo_msg(char *msg){
 			if (!strcmp(ptr,type[0])) n=1;
 			else if(!strcmp(ptr,type[1])) n=2;
 			else if(!strcmp(ptr,type[2])) n=3;
-			else if(!strcmp(ptr,type[3])) n=4;
 		}
 	}else{ n=-1;}
 	return n;
@@ -63,7 +61,7 @@ int create_socket(unsigned short int porta){
 }
 
 /* funzione che invia un messaggio msg alla porta */
-/* "char tipo_dip" serve solo per la stampa del messaggio */
+/* "char tipo_disp" serve solo per la stampa del messaggio */
 void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
 	struct sockaddr_in					To;
 	char string_remote_ip_address[99]	="127.0.0.1";
@@ -132,3 +130,4 @@ void stampa_tabella(BRIDGE *br){
 	}
 	printf("****************************************************\n");
 }
+

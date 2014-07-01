@@ -6,7 +6,7 @@ pthread_cond_t cond		=	PTHREAD_COND_INITIALIZER;
 
 
 unsigned short int port_br[6]={9999, 10100, 10200, 10300, 10400, 10500};
-
+short int flag=2;
 
 int main(int argc, char *argv[]){
 	
