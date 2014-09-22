@@ -112,7 +112,7 @@ void *create_lan(void *parametri){
 							Fromlen=sizeof(struct sockaddr_in);
 							
 							/* RECVFROM */
-							msglen = recvfrom ( param->sock_fd_local[x], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+							msglen = recvfrom (param->sock_fd_local[x], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 							if (msglen<0){
 								char msgerror[1024];
 								sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
