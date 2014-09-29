@@ -6,7 +6,7 @@ void *read_file_config(void* arg){
 	
 	int BUFF_CHAR=20;
 	/* interi d'appoggio per cicli */
-	int z, z1, x, ris,n, n_lan, n_br ;
+	int 	q,z, z1, x, ris,n, n_lan, n_br ;
 
 	char *ptr;
 	char ch,ch1, tmp[BUFF_CHAR], tmp_ip[BUFF_CHAR], tmp_ip21[BUFF_CHAR];
@@ -54,6 +54,10 @@ void *read_file_config(void* arg){
 				b[x]->state_l=1;
 				b[x]->state_r=1;
 				b[x]->num_lan=MAX_NUM_LAN-1;
+				for (q=0; q<MAX_NUM_LAN; q++){
+					b[x]->port_lan[q]=0;
+					b[x]->port_br_local[q]=0;
+					b[x]->sock_fd_local[q]=-1;}
 				printf("Bridge[%d]: %d \n",x,b[x]->id);
 			}
 			arg_return0->n_br=n_br;
@@ -77,6 +81,10 @@ void *read_file_config(void* arg){
 				strncpy(string_local_ip_address,tmp_ip, 99);	/* copio la stringa in string_ip_local_address */
 				
 				l[x]->IP=string_local_ip_address;				/* salvo dentro la struct l[] */
+				for (q=0; q<MAX_NUM_BRIDGE; q++){
+					l[x]->l_port_in[q]=0;
+					l[x]->l_port_br[q]=0;
+					l[x]->sock_fd_local[q]=-1;}
 				printf("IP: %s\n",l[x]->IP);
 			}
 			arg_return0->n_lan=n_lan;

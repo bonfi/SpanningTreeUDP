@@ -8,7 +8,7 @@ void *create_lan(void *parametri){
 	char					string_remote_ip_address[100];
 	unsigned short int		remote_port_number, local_port_number;
 	unsigned short int		msglen;
-	short int				sock_fd_tmp, p, x, br, ris, sock_fd_br[10];
+	short int				sock_fd_tmp, p, x, x1, br, ris, sock_fd_br[10];
 	short int 				socketfd;
 	unsigned int			Fromlen;
 	char					*msg;
@@ -118,23 +118,48 @@ void *create_lan(void *parametri){
 								sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
 								perror(msgerror); 
 								/* return(1); */
-							}else{
-								sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
+							}else{sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 								remote_port_number = ntohs(From.sin_port);
-								stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+								if (DBG_MSG_UDP) stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 								
+								/*pthread_mutex_lock (&mutex);														*/
 								/* il messaggio ricevuto è di tipo 'funz_spanning_tree' */
 								if (quale_tipo_msg(msg)==2){
 									br=mit_bridge(msg);
+									
+									x1=0;
+									while (param->br_id[x1]!=br){
+										x1++;}
 									if (DEBUG){
-										printf("sono la lan: %d - il messaggio proviene dal br: %d\n", param->id, br);
-										printf("quindi dalla porta: %d \n",param->l_port_br[br]);}
-									for (ris=1; ris<=(param->num_br); ris++){
-										if (ris!=br && param->l_port_br[ris]!=NULL){
+										printf(_KYEL"sono la lan: %d - il messaggio proviene dal br: %d\n", param->id, br);
+										printf(_KYEL"quindi dalla porta: %d \n"_KNRM,param->l_port_br[param->br_id[x1]]);}
+									for (ris=0; ris<=(param->num_br); ris++){
+										if ((param->l_port_br[ris]!=0) && (param->l_port_br[ris]!=remote_port_number) && (param->sock_fd_local[ris]!=-1)){
 											send_msg(param->sock_fd_local[ris], param->l_port_br[ris], msg, param->id, tipo);
 										}
 									}
 								}
+								if (quale_tipo_msg(msg)==3){
+									x1=is_msg_closeudp(msg);
+									
+									if (x1==1){
+										if (param->n_port==1) {printf("lan: %d - NON chiudo l'ultima connessione a un bridge\n",param->id);}
+										else {
+											printf("lan: %d -- IN TEORIA DOVREI CHIUDERE LA CONNESSIONE CON:%d \n",param->id, remote_port_number);
+											sleep(1);
+											for (ris=0; ris<=(param->num_br); ris++){
+												if ((param->l_port_br[ris]!=0) && (param->l_port_br[ris]==remote_port_number)){
+													param->l_port_br[ris]=0;
+													FD_CLR(param->sock_fd_local[ris],&service_fd_set);
+													param->sock_fd_local[ris]=-1;
+													fdmax--;
+													param->n_port--;
+												}
+											}
+										}
+									}
+								}
+								/*pthread_mutex_unlock (&mutex);														*/
 							}
 						}
 					}

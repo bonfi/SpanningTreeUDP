@@ -20,11 +20,12 @@ void *create_br(void *parametri){
 	char					string_remote_ip_address[100];
 	unsigned short int		remote_port_number, local_port_number;
 	int						msglen;
-	short int				socketfd, sock_fd_tmp, p, x, n, ris, br, root_id_temp_br, sock_fd_br[10];
+	short int				socketfd, sock_fd_tmp, p, x, x1, n1, n, ris, br, sock_fd_br[10];
+	short int				msg_dist_rootbr, root_id_temp_br, mydist_rootbr, my_rootbr, root_port;
+	short int 				min_dist=10, best_idbr, best_idbr_root;
 	unsigned int			Fromlen;
 	char					*msg;
 	unsigned short int		required_remote_port_number;
-	char					string_required_remote_ip_address[100];
 	struct timeval			timeout;
 	int						fdmax;
 	fd_set					write_fd_set, read_fd_set, service_fd_set;
@@ -156,6 +157,8 @@ void *create_br(void *parametri){
 										X: id di bridge mittente (inizialmente il proprio id)
 									 */
 									msg=msg_cfg_stp(param->id,0,param->id);
+									best_idbr=param->id;
+									best_idbr_root=param->id;
 									
 									for (x=1; x<=(param->num_lan); x++){
 										if (param->port_lan[x]!=NULL){
@@ -201,28 +204,95 @@ void *create_br(void *parametri){
 								n=n+1;
 								
 								/* il messaggio ricevuto è di tipo 'spanning_tree' */
-								pthread_mutex_lock(&mutex);
+								
 								if (quale_tipo_msg(msg)==2){
-									if(param->state_r==1){
-										br=mit_bridge(msg);
-										if (DEBUG){
-											printf("sono il br: %d - il messaggio proviene dal br: %d\n", param->id, br);
+									/* quale bridge mi ha mandato il messaggio */
+									br=mit_bridge(msg);
+									if (DEBUG){printf(_KMAG"sono il br: %d - root: %d - il messaggio proviene dal br: %d \n"_KNRM, param->id,param->state_r, br);}
+									/* quel'è l'id del presunto bridge root */
+									root_id_temp_br=id_temp_root_br(msg);
+									/* e la distanza tra br del msg e br root */
+									msg_dist_rootbr=dist_root_br(msg);
+									sleep(1);
+									printf("sono il br:%d - msg_dist_rootbr è= %d \n", param->id, msg_dist_rootbr);
+									
+									/* salvo il migliore messaggio di config */
+									if (root_id_temp_br < best_idbr_root || ((best_idbr_root==root_id_temp_br)&&(msg_dist_rootbr<min_dist)) || 
+											(((best_idbr_root==root_id_temp_br)&&(msg_dist_rootbr==min_dist))&&(br<best_idbr))){
+										min_dist=msg_dist_rootbr+1;
+										mydist_rootbr=min_dist;
+										best_idbr=br;
+										best_idbr_root=root_id_temp_br;
+										my_rootbr=best_idbr_root;
+										root_port=remote_port_number;
+									}
+									
+									/* non sono bridge designato per la porta in esame*/
+									if(msg_dist_rootbr < mydist_rootbr || ((msg_dist_rootbr == mydist_rootbr) && (br < param->id))){
+										for (x1=1; x1<=(param->num_lan); x1++){
+											if (param->port_lan[x1]==remote_port_number && param->port_lan[x1]!=root_port){
+												printf("non sono br designato perchè: msg_dist_rootbr:%d - mydist_rootbr: %d - id_br_mit: %d - myid: %d \n", msg_dist_rootbr,mydist_rootbr, br, param->id);
+												/* devo chiudere la connessione con quella lan/bridge */
+												msg=msg_close_connection();
+												send_msg(param->sock_fd_local[x1], param->port_lan[x1], msg, param->id, tipo);
+												FD_CLR( param->sock_fd_local[x1],&service_fd_set);
+												param->sock_fd_local[x1]=-1;
+												fdmax=fdmax-1;
+												param->port_lan[x1]=0;
+												param->port_br_local[x1]=0;
+												param->n_port=param->n_port-1;
+												stampa_tabella(param);
+												printf("sono il br: %d e ho %d connessioni \n",param->id, param->n_port);
+												
+												sleep(1);
+												pthread_mutex_lock (&mutex);														
+												if (param->n_port == 1){
+													n1=0;
+													while(param->port_lan[n1]!=0){
+														n1=n1+1;
+													}
+													sleep(1);
+													printf("sono il br: %d e ho solo questa porta %d attiva \n",param->id, param->port_lan[n1]);
+													param->port_lan[n1]=0;
+													FD_CLR( param->sock_fd_local[n1],&service_fd_set);
+													param->sock_fd_local[n1]=-1;
+													sleep(1);
+													stampa_tabella(param);
+													printf("sono il br: %d e sono inutile e quindi muoio. addio :( \n", param->id);
+													param->n_port--;
+													free(param);
+													pthread_exit (NULL);
+												}
+												pthread_mutex_unlock (&mutex);														
 											}
-										root_id_temp_br=id_temp_root_br(msg);
-										if (param->id > root_id_temp_br){
-												param->state_r=0;
-												printf(_KCYN"sono il br: %d e non sono più root \n" _KNRM, param->id);
+										}
+										sleep(1);
+									}
+									/* non sono il root bridge */
+									if (param->id > best_idbr_root){
+										if (param->state_r == 1){
+											param->state_r=0;
+											printf(_KCYN"sono il br: %d e non sono più root \n" _KNRM, param->id);}
+										msg=msg_cfg_stp(root_id_temp_br, (msg_dist_rootbr+1),param->id);
+										for (x1=1; x1<=(param->num_lan); x1++){
+											if (param->port_lan[x1]!=0 && (param->port_lan[x1]!=remote_port_number)){
+												send_msg(param->sock_fd_local[x1], param->port_lan[x1], msg, param->id, tipo);
+											}
+										}
+									}
+									/* sono ancora la radice ??  mando ancora messaggi di config*/
+									if (param->state_r == 1){
+										
+										mydist_rootbr=0;
+										msg=msg_cfg_stp(param->id,mydist_rootbr,param->id);
+										
+										for (x1=1; x1<=(param->num_lan); x1++){
+											if (param->port_lan[x1]!=0){
+												send_msg(param->sock_fd_local[x1], param->port_lan[x1], msg, param->id, tipo);
+												}
 										}
 									}
 								}
-								if(DEBUG){ printf("sono il br: %d - root: %d\n", param->id, param->state_r);}
-								sleep(1);
-								pthread_mutex_unlock(&mutex);
-								
-								/*signal(SIGALRM, monitor);
-								alarm(1);
-								*/
-								
 								
 							}
 							if(n==ris){ break;}

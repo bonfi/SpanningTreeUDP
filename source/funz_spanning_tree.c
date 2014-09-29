@@ -43,12 +43,12 @@ int mit_bridge(char *msg){
 	result = strtok(ptr , s);
 	for (x = 0 ; x<4 ; x++){
 		result = strtok(NULL , s);
-		/*printf("result: %s , ciclo x=%d \n",result, x);*/
 		}
 	br=atoi(result);
 	return br;
 }
 
+/* restituisce l'id del br root msg */
 int id_temp_root_br(char *msg){
 	int				br, x;
 	char 			*ptr,*result;
@@ -63,3 +63,59 @@ int id_temp_root_br(char *msg){
 	br=atoi(result);
 	return br;
 }
+
+
+/* restituisce la distanza dal br root */ 
+int dist_root_br(char *msg){
+	int				br, x;
+	char 			*ptr,*result, *saveptr1;
+	const char 		*s = ":";
+	
+	ptr=malloc(sizeof(char)*(strlen(msg)+2));
+	memcpy(ptr, msg,((strlen(msg))+1));
+	sleep(1);
+	result = (char*)strtok_r(ptr , s, &saveptr1);
+	for (x = 0 ; x<3 ; x++){
+		result = (char *)strtok_r(NULL , s, &saveptr1 );
+	}
+	br=atoi(result);
+	return br;
+}
+
+
+char *msg_close_connection(void){
+	/* printf(_KCYN "id passato a funz : %d \n" _KNRM,id); */
+	char	*mess;
+	char	*type_msg="tipo_msg:std:";
+	char	*duepunti=":";
+	char	*msg="msg";
+	char	*kill_msg="end_udp";
+	
+	mess=(char*)malloc(sizeof(char)*(strlen(duepunti)+strlen(msg)+strlen(kill_msg)+strlen(type_msg)+2));
+	strcpy(mess, type_msg);
+	strcat(mess,msg);
+	strcat(mess,duepunti);
+	strcat(mess,kill_msg);
+	strcat(mess, "\0");
+	
+	return mess;
+}
+
+int is_msg_closeudp(char *msg){
+	int 			val=0;
+	char			*kill_msg="end_udp";
+	char 			*ptr,*temp;
+	const char 		*s = ":";
+	
+	ptr=malloc(sizeof(char)*(strlen(msg)+2));
+	memcpy(ptr, msg,((strlen(msg))+1));
+	sleep(1);
+	temp = strtok_r(ptr , s);
+	while (temp!=NULL){
+		if (strcmp(temp,kill_msg)){val=1;}
+		temp = strtok_r(NULL , s);
+	}
+	
+	return val;
+}
+

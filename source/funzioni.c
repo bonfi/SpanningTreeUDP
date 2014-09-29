@@ -31,7 +31,7 @@ int quale_tipo_msg(char *msg){
 tipo_msg:setup_link:msg:ciao, sono la lan:2 */
 
 /* crea un socket e lo binda su localhost */
-int create_socket(unsigned short int porta){
+int create_socket(short int porta){
 	short int				socketfd, ris;
 	struct sockaddr_in		Local;
 	
@@ -62,7 +62,7 @@ int create_socket(unsigned short int porta){
 
 /* funzione che invia un messaggio msg alla porta */
 /* "char tipo_disp" serve solo per la stampa del messaggio */
-void send_msg(short int socket_fd, unsigned short int porta, char *msg, int id_disp, char tipo_disp){
+void send_msg(short int socket_fd, short int porta, char *msg, int id_disp, char tipo_disp){
 	struct sockaddr_in					To;
 	char string_remote_ip_address[99]	="127.0.0.1";
 	int 								ris, addr_size;
@@ -119,7 +119,7 @@ void stampa_tabella(BRIDGE *br){
 	printf("*Tabella del Bridge: %d				   * \n", br->id);
 	for(x=1 ; x<=12 ; x++){
 		
-		if (br->port_lan[x]!=NULL && br->port_br_local[x]!=NULL){
+		if (br->port_lan[x]!=0 && br->port_br_local[x]!=0){
 			if (DEBUG) {
 				status=fcntl(br->sock_fd_local[x], F_GETFL);
 				if (status & O_RDONLY){ st="read only";}
