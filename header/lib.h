@@ -36,7 +36,7 @@
 
  
 #define DEBUG			1			/* 1 per debug, 0 no debug */
-#define DBG_MSG_UDP		1
+#define DBG_MSG_UDP		1			/* stampa i messaggi UDP */
 #define MAXBUF			3000
 #define SIZEBUF			150
 #define SOCKET_ERROR	((int)-1)

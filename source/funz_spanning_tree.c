@@ -12,7 +12,6 @@ char *msg_cfg_stp(int id_root, int dist, int id_mitt){
 	char	id_br[5];
 	char	id_br_mitt[5];
 	char	c_dist[5];
-	
 	sprintf(id_br, "%d", id_root);
 	
 	sprintf(id_br_mitt, "%d", id_mitt);
@@ -21,6 +20,7 @@ char *msg_cfg_stp(int id_root, int dist, int id_mitt){
 	sleep(1);
 	
 	mess=(char*)malloc(sizeof(char)*(strlen(duepunti)+strlen(id_br)+strlen(id_br_mitt)+strlen(c_dist)+strlen(type_msg)+2));
+	sleep(1);
 	strcpy(mess, type_msg);
 	strcat(mess,id_br);
 	strcat(mess,duepunti);
@@ -68,15 +68,15 @@ int id_temp_root_br(char *msg){
 /* restituisce la distanza dal br root */ 
 int dist_root_br(char *msg){
 	int				br, x;
-	char 			*ptr,*result, *saveptr1;
+	char 			*ptr,*result;
 	const char 		*s = ":";
 	
 	ptr=malloc(sizeof(char)*(strlen(msg)+2));
 	memcpy(ptr, msg,((strlen(msg))+1));
-	sleep(1);
-	result = (char*)strtok_r(ptr , s, &saveptr1);
+	
+	result = strtok(ptr , s);
 	for (x = 0 ; x<3 ; x++){
-		result = (char *)strtok_r(NULL , s, &saveptr1 );
+		result = strtok(NULL , s );
 	}
 	br=atoi(result);
 	return br;
@@ -92,6 +92,7 @@ char *msg_close_connection(void){
 	char	*kill_msg="end_udp";
 	
 	mess=(char*)malloc(sizeof(char)*(strlen(duepunti)+strlen(msg)+strlen(kill_msg)+strlen(type_msg)+2));
+	sleep(1);
 	strcpy(mess, type_msg);
 	strcat(mess,msg);
 	strcat(mess,duepunti);
@@ -110,10 +111,10 @@ int is_msg_closeudp(char *msg){
 	ptr=malloc(sizeof(char)*(strlen(msg)+2));
 	memcpy(ptr, msg,((strlen(msg))+1));
 	sleep(1);
-	temp = strtok_r(ptr , s);
+	temp = strtok(ptr , s);
 	while (temp!=NULL){
 		if (strcmp(temp,kill_msg)){val=1;}
-		temp = strtok_r(NULL , s);
+		temp = strtok(NULL , s);
 	}
 	
 	return val;

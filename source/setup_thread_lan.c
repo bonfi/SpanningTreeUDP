@@ -59,7 +59,7 @@ void *create_lan(void *parametri){
 				printf("id LAN è : %d \n",param->id); 
 				printf("id BR destinazione: %d \n", param->br_id[x+1]);}
 			/*  e poi spedendo il messaggio */
-			send_msg((param->sock_fd_local[param->br_id[x+1]]), port_br[param->br_id[x+1]], msg, param->id, tipo);
+			send_msg(param->sock_fd_local[param->br_id[x+1]], port_br[param->br_id[x+1]], msg, param->id, tipo);
 			sleep(1);
 			pthread_mutex_unlock (&mutex);														
 			
@@ -70,7 +70,7 @@ void *create_lan(void *parametri){
 			Fromlen=sizeof(struct sockaddr_in);
 			
 			/* RECVFROM */
-			msglen = recvfrom ( (param->sock_fd_local[param->br_id[x+1]]), msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+			msglen = recvfrom (param->sock_fd_local[param->br_id[x+1]], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 			if (msglen<0){
 				char msgerror[1024];
 				sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
@@ -79,7 +79,7 @@ void *create_lan(void *parametri){
 			}else{
 				sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 				remote_port_number = ntohs(From.sin_port);
-				stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+				if (DBG_MSG_UDP) stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[param->br_id[x+1]]);
 			}
 			ris = quale_porta(msg);
 			if (ris==-1){ printf("Errore nel messaggio: porta non valida \n");}
@@ -112,7 +112,7 @@ void *create_lan(void *parametri){
 							Fromlen=sizeof(struct sockaddr_in);
 							
 							/* RECVFROM */
-							msglen = recvfrom (param->sock_fd_local[x], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
+							msglen = recvfrom ( param->sock_fd_local[x], msg, (int)SIZEBUF, 0, (struct sockaddr*)&From, &Fromlen);
 							if (msglen<0){
 								char msgerror[1024];
 								sprintf(msgerror,"recvfrom() failed [err %d] ", errno);
@@ -131,8 +131,8 @@ void *create_lan(void *parametri){
 									while (param->br_id[x1]!=br){
 										x1++;}
 									if (DEBUG){
-										printf(_KYEL"sono la lan: %d - il messaggio proviene dal br: %d\n", param->id, br);
-										printf(_KYEL"quindi dalla porta: %d \n"_KNRM,param->l_port_br[param->br_id[x1]]);}
+										printf(_KYEL"sono LAN: %d - il messaggio proviene dal br: %d\n", param->id, br);
+										/*printf(_KYEL"quindi dalla porta: %d \n"_KNRM,param->l_port_br[param->br_id[x1]]);*/}
 									for (ris=0; ris<=(param->num_br); ris++){
 										if ((param->l_port_br[ris]!=0) && (param->l_port_br[ris]!=remote_port_number) && (param->sock_fd_local[ris]!=-1)){
 											send_msg(param->sock_fd_local[ris], param->l_port_br[ris], msg, param->id, tipo);

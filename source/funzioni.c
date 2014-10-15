@@ -67,11 +67,10 @@ void send_msg(short int socket_fd, short int porta, char *msg, int id_disp, char
 	char string_remote_ip_address[99]	="127.0.0.1";
 	int 								ris, addr_size;
 	
-	To.sin_family		=	AF_INET;
-	To.sin_addr.s_addr	=	inet_addr(string_remote_ip_address);
-	To.sin_port		 	=	htons(porta);
+	To.sin_family			=	AF_INET;
+	To.sin_addr.s_addr		=	inet_addr(string_remote_ip_address);
+	To.sin_port		 		=	htons(porta);
 	addr_size = sizeof(struct sockaddr_in);
-	if (DEBUG){ printf("lunghezza del messaggio spedito è: %d byte\n", strlen(msg)+1);}
 	
 	/* send to the address */
 	ris = sendto(socket_fd, msg, strlen(msg)+1 , 0, (struct sockaddr*)&To, addr_size);
@@ -79,7 +78,7 @@ void send_msg(short int socket_fd, short int porta, char *msg, int id_disp, char
 		printf ("sendto() failed, Error: %d \"%s\"\n", errno,strerror(errno));
 		exit(1);
 	}else
-		stampa_pacchetto_trasmesso(msg, id_disp, porta, tipo_disp, socket_fd);
+		if(DBG_MSG_UDP){stampa_pacchetto_trasmesso(msg, id_disp, porta, tipo_disp, socket_fd);}
 }
 
 void stampa_pacchetto_ricevuto(char *msg, int id_dispositivo, int port, char tipo, short int socket){

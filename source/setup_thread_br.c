@@ -108,7 +108,7 @@ void *create_br(void *parametri){
 				}else{
 					sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 					remote_port_number = ntohs(From.sin_port);
-					stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd);
+					if (DBG_MSG_UDP){stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd);}
 			/* ------------------------------------------------------------------------------------------------------*/
 					/* analizzo il messaggio ricevuto: è di tipo setup_link ? */
 					if (quale_tipo_msg(msg)!=1) {printf("Errore:nella porta deafult_br ricevo solo msg di setup_link\n");}
@@ -177,7 +177,7 @@ void *create_br(void *parametri){
 			}else{
 				/*numero di socket che hanno ricevuto qualcosa */
 				n=0;
-				if (DEBUG){printf("ricevuto msg dal bridge: %d\n", param->id);}
+				/* if (DEBUG){printf("sono BR:%d ho ricevuto un messaggio\n", param->id);} */
 				for(p=0; p<=fdmax; p++){
 																										
 					if((p!=param->sock_fd) && ((FD_ISSET(p,&read_fd_set))!=0) ){
@@ -199,7 +199,7 @@ void *create_br(void *parametri){
 								}else{
 									sprintf((char*)string_remote_ip_address,"%s",inet_ntoa(From.sin_addr));
 									remote_port_number = ntohs(From.sin_port);
-									stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
+									if (DBG_MSG_UDP) stampa_pacchetto_ricevuto(msg, param->id, remote_port_number, tipo, param->sock_fd_local[x]);
 								}
 								n=n+1;
 								
@@ -208,17 +208,18 @@ void *create_br(void *parametri){
 								if (quale_tipo_msg(msg)==2){
 									/* quale bridge mi ha mandato il messaggio */
 									br=mit_bridge(msg);
-									if (DEBUG){printf(_KMAG"sono il br: %d - root: %d - il messaggio proviene dal br: %d \n"_KNRM, param->id,param->state_r, br);}
+									if (DEBUG){printf(_KMAG"sono BR:%d - root:%d - il messaggio proviene dal br: %d \n"_KNRM, param->id,param->state_r, br);}
 									/* quel'è l'id del presunto bridge root */
 									root_id_temp_br=id_temp_root_br(msg);
+									
 									/* e la distanza tra br del msg e br root */
 									msg_dist_rootbr=dist_root_br(msg);
-									sleep(1);
-									printf("sono il br:%d - msg_dist_rootbr è= %d \n", param->id, msg_dist_rootbr);
 									
+									sleep(1);
+									printf("sono BR:%d - msg_dist_rootbr è= %d \n", param->id, msg_dist_rootbr);
 									/* salvo il migliore messaggio di config */
 									if (root_id_temp_br < best_idbr_root || ((best_idbr_root==root_id_temp_br)&&(msg_dist_rootbr<min_dist)) || 
-											(((best_idbr_root==root_id_temp_br)&&(msg_dist_rootbr==min_dist))&&(br<best_idbr))){
+											(((best_idbr_root==root_id_temp_br) && (msg_dist_rootbr==min_dist)) && (br<best_idbr))){
 										min_dist=msg_dist_rootbr+1;
 										mydist_rootbr=min_dist;
 										best_idbr=br;
@@ -226,13 +227,12 @@ void *create_br(void *parametri){
 										my_rootbr=best_idbr_root;
 										root_port=remote_port_number;
 									}
-									
 									/* non sono bridge designato per la porta in esame*/
 									if(msg_dist_rootbr < mydist_rootbr || ((msg_dist_rootbr == mydist_rootbr) && (br < param->id))){
 										for (x1=1; x1<=(param->num_lan); x1++){
-											if (param->port_lan[x1]==remote_port_number && param->port_lan[x1]!=root_port){
-												printf("non sono br designato perchè: msg_dist_rootbr:%d - mydist_rootbr: %d - id_br_mit: %d - myid: %d \n", msg_dist_rootbr,mydist_rootbr, br, param->id);
-												/* devo chiudere la connessione con quella lan/bridge */
+											if (param->port_lan[x1]==remote_port_number && param->port_lan[x1]!=root_port && param->port_lan[x1]!=0){
+												printf("non sono br designato perchè: msg_dist_rootbr:%d - mydist_rootbr: %d - id_br_mit: %d - myID: %d \n", msg_dist_rootbr,mydist_rootbr, br, param->id);
+												/* devo chiudere la connessione con quella lan */
 												msg=msg_close_connection();
 												send_msg(param->sock_fd_local[x1], param->port_lan[x1], msg, param->id, tipo);
 												FD_CLR( param->sock_fd_local[x1],&service_fd_set);
@@ -242,38 +242,37 @@ void *create_br(void *parametri){
 												param->port_br_local[x1]=0;
 												param->n_port=param->n_port-1;
 												stampa_tabella(param);
-												printf("sono il br: %d e ho %d connessioni \n",param->id, param->n_port);
+												printf("sono BR:%d e ho %d connessioni \n",param->id, param->n_port);
 												
 												sleep(1);
-												pthread_mutex_lock (&mutex);														
 												if (param->n_port == 1){
 													n1=0;
 													while(param->port_lan[n1]!=0){
 														n1=n1+1;
 													}
 													sleep(1);
-													printf("sono il br: %d e ho solo questa porta %d attiva \n",param->id, param->port_lan[n1]);
+													printf("sono BR:%d e ho solo questa porta %d attiva \n",param->id, param->port_lan[n1]);
 													param->port_lan[n1]=0;
 													FD_CLR( param->sock_fd_local[n1],&service_fd_set);
 													param->sock_fd_local[n1]=-1;
 													sleep(1);
 													stampa_tabella(param);
-													printf("sono il br: %d e sono inutile e quindi muoio. addio :( \n", param->id);
+													printf("sono BR:%d e sono inutile e quindi muoio. addio :( \n", param->id);
 													param->n_port--;
 													free(param);
 													pthread_exit (NULL);
 												}
-												pthread_mutex_unlock (&mutex);														
 											}
 										}
-										sleep(1);
 									}
 									/* non sono il root bridge */
 									if (param->id > best_idbr_root){
 										if (param->state_r == 1){
 											param->state_r=0;
-											printf(_KCYN"sono il br: %d e non sono più root \n" _KNRM, param->id);}
+											printf(_KCYN"sono BR:%d e NON sono più root \n" _KNRM, param->id);}
+										printf("sono BR:%d - parametri passati x msg config %d %d %d \n",param->id,root_id_temp_br,(msg_dist_rootbr+1),param->id);
 										msg=msg_cfg_stp(root_id_temp_br, (msg_dist_rootbr+1),param->id);
+										
 										for (x1=1; x1<=(param->num_lan); x1++){
 											if (param->port_lan[x1]!=0 && (param->port_lan[x1]!=remote_port_number)){
 												send_msg(param->sock_fd_local[x1], param->port_lan[x1], msg, param->id, tipo);
